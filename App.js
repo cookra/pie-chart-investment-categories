@@ -17,7 +17,8 @@ Ext.define('CustomApp', {
             success: function(model){
                 model.getField('InvestmentCategory').getAllowedValueStore().load({
                     callback: function(records){
-                        this.categories = _.rest(_.invoke(records, 'get', 'StringValue')); //remove first element, 'none'.
+                        //this.categories = _.rest(_.invoke(records, 'get', 'StringValue')); //remove first element, 'none'.
+                        this.categories = _.invoke(records, 'get', 'StringValue');
                     },
                     scope:this
                 });
@@ -60,7 +61,7 @@ Ext.define('CustomApp', {
                 },
                 scope:this
             },
-            context:this.getContext().getDataContext(),
+            context:this.getContext().getDataContext()
         });
     },
     processResults:function(store, records){
@@ -70,32 +71,38 @@ Ext.define('CustomApp', {
                         'Name', record.get('Name'),
                         'InvestmentCategory:',record.get('InvestmentCategory') );
         });
-        var recordsByCategory = {};
+        var countByCategory = {};
         var categoryColors = {};
-        var colors = ['#d3d3d3','#b0c4de','#778899','#87cefa'];
-        var chartData = [];
+        var colors = ['#98FB98','#90EE90','#6B8E23','#8FBC8F','#00FF7F','#556B2F','#3CB371','#2E8B57','#228B22','#006400','#008080'];
+        var pieData = [];
         var i = 0;
         
         _.each(this.categories, function(category){
-            recordsByCategory[category] = 0;
-            if (colors.length < i) {
-                categoryColors[category] = colors[colors.length-1];
-            }
-            else{ //if there are more allowed values then colors, default to the last element in colors array
-                categoryColors[category] = colors[i];
-            }
-            i++;
+            countByCategory[category] = 0;
         });
         
         _.each(records, function(record){
             category = record.get('InvestmentCategory');
-            recordsByCategory[category]++;
+            if (category === 'None') {
+                countByCategory['']++;
+            }
+            countByCategory[category]++;
         });
+        console.log('countByCategory', countByCategory);
+        var arrOfCategories = this.sortCategories(countByCategory);
+        console.log(arrOfCategories);
         _.each(this.categories, function(category){
-            chartData.push({
+            var obj = _.find(arrOfCategories, function(o) { return o.key === category; });
+            var color = '#D3D3D3'
+            if (category !== '') {
+                var index = _.findIndex(arrOfCategories, function(o) { return o.key === category; });
+                color =  colors[index];
+            }
+            
+            pieData.push({
                 name: category,
-                y: recordsByCategory[category],
-                color: categoryColors[category]
+                y: obj.value,
+                color: color
             });
             
         });
@@ -138,11 +145,24 @@ Ext.define('CustomApp', {
                     {
                         type:'pie',
                         name:'Investement Categories',
-                        data: chartData
+                        data: pieData
                     }
                 ]
             }
         });
         this.down('#piByCategory')._unmask();
+    },
+    sortCategories:function(obj){
+        var arr = [];
+        for (var prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+                arr.push({
+                    'key': prop,
+                    'value': obj[prop]
+                });
+            }
+        }
+        arr.sort(function(a, b) { return a.value - b.value; });
+        return arr;   
     }
 });
