@@ -1,6 +1,29 @@
 Ext.define('CustomApp', {
     extend: 'Rally.app.App',
+    categories:[],
     launch: function() {
+        this.loadCategories().then({
+            success:function(){
+                this.makeComponents();
+            },
+            scope: this
+        });
+    },
+    loadCategories:function(){
+        return Rally.data.ModelFactory.getModel({
+            type: 'PortfolioItem',
+            success: function(model){
+                model.getField('InvestmentCategory').getAllowedValueStore().load({
+                    callback: function(records){
+                        this.categories = _.rest(_.invoke(records, 'get', 'StringValue')); //remove first element, 'none'.
+                    },
+                    scope:this
+                });
+            },
+            scope:this
+        });
+    },
+    makeComponents:function(){
         this.add({
             xtype: 'rallyreleasecombobox',
             itemId: 'releaseComboBox',
@@ -19,10 +42,10 @@ Ext.define('CustomApp', {
         console.log('release', releaseRef);
         console.log(this.getContext().getDataContext());
         var store = Ext.create('Rally.data.wsapi.Store', {
-            model:"portfolioitem/feature",
+            model:'portfolioitem/feature',
             autoLoad:true,
             limit:Infinity,
-            fetch:['FormattedID','Name','Project','InvestementCategory'],
+            fetch:['FormattedID','Name','Project','InvestmentCategory'],
             filters: [
                 {
                     property: 'Release',
@@ -39,10 +62,12 @@ Ext.define('CustomApp', {
         });
     },
     processResults:function(records){
+        console.log('categories',this.categories);
         _.each(records, function(record){
             console.log('FormattedID: ', record.get('FormattedID'),
                         'Name', record.get('Name'),
-                        'InvestementCategory:',record.get('InvestementCategory') );
+                        'InvestmentCategory:',record.get('InvestmentCategory') );
         });
+        
     }
 });
