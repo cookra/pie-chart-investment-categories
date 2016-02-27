@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Investement Categories</title>
+
+    <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+                Ext.define("Rally.pie.FeaturesByInvestement",{extend:"Rally.app.App",launch:function(){this.add({xtype:"rallyreleasecombobox",itemId:"releaseComboBox",fieldLabel:"Filter by Release:",context:this.getContext().getDataContext(),listeners:{ready:this.getFeaturesInRelease,select:this.getFeaturesInRelease,scope:this}})},getFeaturesInRelease:function(release){console.log("release",release)}});
+
+            Rally.launchApp('CustomApp', {
+                name:"Investement Categories",
+	            parentRepos:""
+            });
+
+        });
+    </script>
+
+
+    <style type="text/css">
+        
+    </style>
+</head>
+<body>
+</body>
+</html>
