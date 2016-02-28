@@ -60,7 +60,7 @@ Ext.define('CustomApp', {
                 },
                 scope:this
             },
-            context:this.getContext().getDataContext(),
+            context:this.getContext().getDataContext()
         });
     },
     processResults:function(store, records){
@@ -70,37 +70,28 @@ Ext.define('CustomApp', {
                         'Name', record.get('Name'),
                         'InvestmentCategory:',record.get('InvestmentCategory') );
         });
-        var recordsByCategory = {};
-        var categoryColors = {};
-        var colors = ['#d3d3d3','#b0c4de','#778899','#87cefa'];
-        var chartData = [];
-        var i = 0;
+        var countByCategory = {};
+        var piData = [];
         
         _.each(this.categories, function(category){
-            recordsByCategory[category] = 0;
-            if (colors.length < i) {
-                categoryColors[category] = colors[colors.length-1];
-            }
-            else{ //if there are more allowed values then colors, default to the last element in colors array
-                categoryColors[category] = colors[i];
-            }
-            i++;
+            countByCategory[category] = 0;
         });
         
         _.each(records, function(record){
             category = record.get('InvestmentCategory');
-            recordsByCategory[category]++;
+            countByCategory[category]++;
         });
         _.each(this.categories, function(category){
-            chartData.push({
+            var color = this.pickColor(category);
+            piData.push({
                 name: category,
-                y: recordsByCategory[category],
-                color: categoryColors[category]
+                y: countByCategory[category],
+                color: color
             });
             
-        });
+        },this);
         if (this.down('#piByCategory')) {
-	    this.remove('piByCategory');
+            this.remove('piByCategory');
 	}
         this._myMask.hide();
         this.add({
@@ -138,11 +129,55 @@ Ext.define('CustomApp', {
                     {
                         type:'pie',
                         name:'Investement Categories',
-                        data: chartData
+                        data: piData
                     }
                 ]
             }
         });
         this.down('#piByCategory')._unmask();
+    },
+    pickColor:function(category){
+        var color = '';
+        switch (category) {
+            case 'Architecture':
+                color = '#228B22';
+                break;
+            case 'Sustaninability':
+                color = '#006400';
+                break;
+            case 'KTLO':
+                color = '#ADFF2F';
+                break;
+            case 'Strategic':
+                color = '#00FF7F';
+                break;
+            case 'User Focused':
+                color = '#9ACD32';
+                break;
+            case 'Research':
+                color = '#66CDAA';
+                break;
+            case 'Connectors & On Prem (H1)':
+                color = '#20B2AA';
+                break;
+            case 'UX':
+                color = '#9ACD32';
+                break;
+            case 'Initiatives':
+                color = '#6495ED';
+                break;
+            case 'Defects':
+                color = '#CD853F';
+                break;
+            case 'Customer Voice':
+                color = '#D2691E';
+                break;
+            case '':
+                color = '#DCDCDC';
+                break;
+            default:
+                color = '#7CFC00';
+        }
+        return color;
     }
 });
