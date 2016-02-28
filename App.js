@@ -64,7 +64,7 @@ Ext.define('CustomApp', {
             model:'portfolioitem/feature',
             autoLoad:true,
             limit:Infinity,
-            fetch:['FormattedID','Name','Project','InvestmentCategory','Parent'],
+            fetch:['FormattedID','Name','InvestmentCategory','Parent'],
             filters: [
                 {
                     property: 'Release',
@@ -212,10 +212,8 @@ Ext.define('CustomApp', {
                 color = '#6495ED';
                 break;
             case 'Defects':
-                color = '#CD853F';
-                break;
             case 'Customer Voice':
-                color = '#D2691E';
+                color = '#FFD700';
                 break;
             case '':
                 color = '#DCDCDC';
@@ -234,7 +232,7 @@ Ext.define('CustomApp', {
             data: selectedRecords.records,
             getGroupString: function(record) {
                 var parent = record.get('Parent');
-                return (parent && parent.FormattedID + ' ' + parent._refObjectName) || 'No Parent Initiative';
+                return (parent && parent.FormattedID + " " + parent._refObjectName + ", Parent's Investment Category: " + parent.InvestmentCategory) || 'No Parent Initiative';
             },
             groupField: 'Parent',
             limit:Infinity
@@ -242,6 +240,7 @@ Ext.define('CustomApp', {
         this.down('#gridContainer').add({
             xtype: 'rallygrid',
             itemId: 'piGrid',
+            title: 'features in ' + selectedRecords.category + ' category',
             store: gridStore,
             features: [{ftype:'groupingsummary'}],
             columnCfgs: [
@@ -250,10 +249,7 @@ Ext.define('CustomApp', {
                     tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
                 },
                 {
-                    text: 'Name', dataIndex: 'Name'
-                },
-                {
-                    text: 'Investment Category', dataIndex: 'InvestmentCategory'
+                    text: 'Name', dataIndex: 'Name', flex: 1
                 }
             ]
         });
