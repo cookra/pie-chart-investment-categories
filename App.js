@@ -39,6 +39,21 @@ Ext.define('CustomApp', {
                 scope: this
             }
         });
+        this.add({
+            layout: {
+                type: 'hbox',
+                align: 'stretch'
+            },
+            items: [{
+                xtype: 'container',
+                itemId:'chartContainer',
+                flex: 1
+            },{
+                xtype: 'container',
+                itemId:'gridContainer',
+                flex: 1
+            }]
+        });
     },
 
     getFeaturesInRelease: function(release) {
@@ -109,14 +124,14 @@ Ext.define('CustomApp', {
             
         },this);
         if (this.down('#piGrid')) {
-            this.remove('piGrid');
+            this.down('#gridContainer').remove('piGrid');
 	}
         if (this.down('#piByCategory')) {
-            this.remove('piByCategory');
+            this.down('#chartContainer').remove('piByCategory');
 	}
         
         this._myMask.hide();
-        this.add({
+        this.down('#chartContainer').add({
             xtype: 'rallychart',
             height:400,
             storeType:'Rally.data.wsapi.Store',
@@ -213,7 +228,7 @@ Ext.define('CustomApp', {
     makeGrid:function(selectedRecords){
         console.log('records of this category:', selectedRecords);
         if (this.down('#piGrid')) {
-            this.remove('piGrid');
+            this.down('#gridContainer').remove('piGrid');
 	}
         var gridStore = Ext.create('Rally.data.custom.Store', {
             data: selectedRecords.records,
@@ -224,14 +239,10 @@ Ext.define('CustomApp', {
             groupField: 'Parent',
             limit:Infinity
         });
-        this.add({
+        this.down('#gridContainer').add({
             xtype: 'rallygrid',
             itemId: 'piGrid',
             store: gridStore,
-            //features: [{
-            //    ftype: 'groupingsummary',
-            //    groupHeaderTpl: '{name} ({rows.length})'
-            //}],
             features: [{ftype:'groupingsummary'}],
             columnCfgs: [
                 {
@@ -245,20 +256,6 @@ Ext.define('CustomApp', {
                     text: 'Investment Category', dataIndex: 'InvestmentCategory'
                 }
             ]
-            //context: this.getContext(),
-            //features: [{
-            //    ftype: 'groupingsummary',
-            //    groupHeaderTpl: '{name} ({rows.length})'
-            //}],
-            //storeConfig: {
-            //    data: selectedRecords,
-            //    groupField: 'Parent',
-            //    groupDir: 'ASC',
-            //    getGroupString: function(record) {
-            //        var parent = record.get('Parent');
-            //        return (parent && parent._refObjectName) || 'No Parent Initiative';
-            //    }
-            //}
         });
     }
 });
