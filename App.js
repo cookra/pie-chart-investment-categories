@@ -26,6 +26,8 @@ Ext.define('CustomApp', {
         });
     },
     makeComponents:function(){
+        console.log('categories',this.categories);
+        
         this.add({
             xtype: 'rallyreleasecombobox',
             itemId: 'releaseComboBox',
@@ -47,7 +49,7 @@ Ext.define('CustomApp', {
             model:'portfolioitem/feature',
             autoLoad:true,
             limit:Infinity,
-            fetch:['FormattedID','Name','Project','InvestmentCategory'],
+            fetch:['FormattedID','Name','Project','InvestmentCategory','Parent'],
             filters: [
                 {
                     property: 'Release',
@@ -64,46 +66,66 @@ Ext.define('CustomApp', {
         });
     },
     processResults:function(store, records){
-        console.log('categories',this.categories);
+        var app = this;
+        var countByCategory = {};
+        var piData = [];
+        var recordsGroupedByCategory = [];
+        
+        //console.log('recordsGroupedByCategory', recordsGroupedByCategory);
         _.each(records, function(record){
             console.log('FormattedID: ', record.get('FormattedID'),
                         'Name', record.get('Name'),
-                        'InvestmentCategory:',record.get('InvestmentCategory') );
-        });
-        var countByCategory = {};
-        var piData = [];
+                        'InvestmentCategory:',record.get('InvestmentCategory'));
         
+        });
         _.each(this.categories, function(category){
             countByCategory[category] = 0;
+            recordsGroupedByCategory.push({
+                category: category,
+                records: []
+            });
         });
         
         _.each(records, function(record){
             category = record.get('InvestmentCategory');
-            countByCategory[category]++;
+            if (category !== "None") {
+                countByCategory[category]++;
+                var obj = _.find(recordsGroupedByCategory, function(o) { return o.category === category; });
+                obj.records.push(record);
+            }
+            
         });
+        
+        console.log('recordsGroupedByCategory', recordsGroupedByCategory);
+        
         _.each(this.categories, function(category){
             var color = this.pickColor(category);
             piData.push({
                 name: category,
                 y: countByCategory[category],
-                color: color
+                color: color,
+                foo: 'ok'
             });
             
         },this);
+        if (this.down('#piGrid')) {
+            this.remove('piGrid');
+	}
         if (this.down('#piByCategory')) {
             this.remove('piByCategory');
 	}
+        
         this._myMask.hide();
         this.add({
             xtype: 'rallychart',
             height:400,
             storeType:'Rally.data.wsapi.Store',
             store:  store,
-            itemId: 'piByCategory',
+            itemId: 'piByCategory',  
             chartConfig:{
                 chart:{},
                 title:{
-                    text: 'Features By Category' ,
+                    text: 'Features By Investment Category' ,
                     align: 'center'
                 },
                 tooltip:{
@@ -129,7 +151,15 @@ Ext.define('CustomApp', {
                     {
                         type:'pie',
                         name:'Investement Categories',
-                        data: piData
+                        data: piData,
+                        point:{
+                            events:{
+                                click: function (event) {
+                                    var selectedRecords = _.find(recordsGroupedByCategory, function(o) { return o.category === this.name; },this);
+                                    app.makeGrid(selectedRecords);
+                                }
+                            }
+                        }
                     }
                 ]
             }
@@ -142,7 +172,7 @@ Ext.define('CustomApp', {
             case 'Architecture':
                 color = '#228B22';
                 break;
-            case 'Sustaninability':
+            case 'Sustainability':
                 color = '#006400';
                 break;
             case 'KTLO':
@@ -179,5 +209,56 @@ Ext.define('CustomApp', {
                 color = '#7CFC00';
         }
         return color;
+    },
+    makeGrid:function(selectedRecords){
+        console.log('records of this category:', selectedRecords);
+        if (this.down('#piGrid')) {
+            this.remove('piGrid');
+	}
+        var gridStore = Ext.create('Rally.data.custom.Store', {
+            data: selectedRecords.records,
+            getGroupString: function(record) {
+                var parent = record.get('Parent');
+                return (parent && parent.FormattedID + ' ' + parent._refObjectName) || 'No Parent Initiative';
+            },
+            groupField: 'Parent',
+            limit:Infinity
+        });
+        this.add({
+            xtype: 'rallygrid',
+            itemId: 'piGrid',
+            store: gridStore,
+            //features: [{
+            //    ftype: 'groupingsummary',
+            //    groupHeaderTpl: '{name} ({rows.length})'
+            //}],
+            features: [{ftype:'groupingsummary'}],
+            columnCfgs: [
+                {
+                    text: 'Formatted ID', dataIndex: 'FormattedID', xtype: 'templatecolumn',
+                    tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
+                },
+                {
+                    text: 'Name', dataIndex: 'Name'
+                },
+                {
+                    text: 'Investment Category', dataIndex: 'InvestmentCategory'
+                }
+            ]
+            //context: this.getContext(),
+            //features: [{
+            //    ftype: 'groupingsummary',
+            //    groupHeaderTpl: '{name} ({rows.length})'
+            //}],
+            //storeConfig: {
+            //    data: selectedRecords,
+            //    groupField: 'Parent',
+            //    groupDir: 'ASC',
+            //    getGroupString: function(record) {
+            //        var parent = record.get('Parent');
+            //        return (parent && parent._refObjectName) || 'No Parent Initiative';
+            //    }
+            //}
+        });
     }
 });
